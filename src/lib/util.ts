@@ -3,7 +3,6 @@ import { readdirSync } from "node:fs"
 import process from "node:process"
 import { setInterval } from "node:timers"
 
-import axios from "axios"
 import {
 	ChatInputCommandInteraction,
 	GuildMember,
@@ -17,6 +16,7 @@ import {
 	User,
 } from "discord.js"
 import puppeteer from "puppeteer"
+import { fetch, RequestInit } from "undici"
 import { v4 } from "uuid"
 
 import { db } from "./dbclient"
@@ -29,7 +29,12 @@ import type { ResponseObject, TranslationStatusModel } from "@crowdin/crowdin-ap
 
 // #region Variables
 
-export const fetchSettings = { headers: { "User-Agent": "Hypixel Translators Bot" }, timeout: 30_000 }
+export const fetchSettings: RequestInit = { headers: { "User-Agent": "Hypixel Translators Bot" } }
+
+export const postSettings: RequestInit = {
+	headers: { "Content-Type": "application/json", ...fetchSettings.headers },
+	method: "POST",
+}
 
 // Browser-related variables, not exported
 let browser: puppeteer.Browser | null = null,
@@ -189,17 +194,15 @@ export async function getInviteLink() {
 	return `https://discord.gg/${inviteCode}`
 }
 
-export async function getMCProfile(uuid: string) {
-	return await axios
-		.get<MinecraftProfile>(`https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`, fetchSettings)
-		.then(json => json.data)
+export function getMCProfile(uuid: string) {
+	return fetch(`https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`, fetchSettings)
+		.then(res => res.json() as Promise<MinecraftProfile>)
 		.catch(() => null)
 }
 
-export async function getUUID(username: string): Promise<string | null> {
-	return await axios
-		.get(`https://api.mojang.com/users/profiles/minecraft/${username}`, fetchSettings)
-		.then(data => data.data.id ?? null)
+export function getUUID(username: string) {
+	return fetch(`https://api.mojang.com/users/profiles/minecraft/${username}`, fetchSettings)
+		.then(async res => ((await res.json()) as UUIDResponse).id ?? null)
 		.catch(() => null)
 }
 
@@ -234,13 +237,14 @@ export function parseToNumberString(num: number, getString: GetStringFunction): 
 	return `${num}`
 }
 
-export async function restart(interaction?: ChatInputCommandInteraction) {
-	await axios.delete("https://api.heroku.com/apps/hypixel-translators/dynos", {
+export function restart(interaction?: ChatInputCommandInteraction) {
+	return fetch("https://api.heroku.com/apps/hypixel-translators/dynos", {
 		headers: {
 			"User-Agent": `${interaction?.user.tag ?? client.user.tag}`,
 			Authorization: `Bearer ${process.env.HEROKU_API}`,
 			Accept: "application/vnd.heroku+json; version=3",
 		},
+		method: "DELETE",
 	})
 }
 
@@ -565,6 +569,11 @@ export interface Stats {
 	value?: number
 	error?: boolean
 	errorMessage?: string
+}
+
+interface UUIDResponse {
+	name: string
+	id: string
 }
 
 // #endregion

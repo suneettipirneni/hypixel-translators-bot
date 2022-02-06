@@ -1,7 +1,7 @@
 /* eslint-disable import/order */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 const fs = require("node:fs"),
-	axios = require("axios"),
+	{ fetch } = require("undici"),
 	flagColors = require("language-flag-colors"),
 	{ colors, listeningStatuses, watchingStatuses, playingStatuses, ids } = require("../../config.json"),
 	{ crowdin } = require("../../index"),

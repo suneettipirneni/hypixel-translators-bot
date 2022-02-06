@@ -1,5 +1,5 @@
-import axios from "axios"
 import { MessageEmbed } from "discord.js"
+import { fetch } from "undici"
 
 import { colors, ids } from "../../config.json"
 import { db, DbUser } from "../../lib/dbclient"
@@ -36,16 +36,15 @@ const command: Command = {
 		if (!uuid) throw "noUser"
 
 		// Make a response to the slothpixel api (hypixel api but we dont need an api key)
-		const json = await axios
-			.get<GraphQLQuery["data"]["players"]["player"] & { error?: string }>(`https://api.slothpixel.me/api/players/${uuid}`, fetchSettings)
-			.then(res => res.data)
+		const json = (await fetch(`https://api.slothpixel.me/api/players/${uuid}`, fetchSettings)
+			.then(res => res.json())
 			.catch(e => {
-				if (e.code === "ECONNABORTED") {
+				if (e.code === "ECONNRESET") {
 					// This means the request timed out
 					console.error("slothpixel is down, sending error.")
 					throw "apiError"
 				} else throw e
-			})
+			})) as GraphQLQuery["data"]["players"]["player"] & { error?: string }
 
 		// Handle errors
 		if (json.error === "Player does not exist" || json.error === "Invalid username or UUID!") throw "falseUser"

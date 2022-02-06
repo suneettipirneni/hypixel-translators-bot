@@ -1,10 +1,10 @@
-import axios from "axios"
 import { GuildMember, HexColorString, Message, MessageEmbed, MessageSelectMenu } from "discord.js"
+import { fetch } from "undici"
 
 import { ids } from "../../config.json"
 import { client } from "../../index"
 import { db, DbUser } from "../../lib/dbclient"
-import { fetchSettings, generateTip, getMCProfile, getUUID, gql, GraphQLQuery, transformDiscordLocale, updateRoles } from "../../lib/util"
+import { generateTip, getMCProfile, getUUID, gql, GraphQLQuery, postSettings, transformDiscordLocale, updateRoles } from "../../lib/util"
 
 import type { Command, GetStringFunction } from "../../lib/imports"
 
@@ -48,19 +48,18 @@ const command: Command = {
 		if (!uuid) throw "falseUser"
 
 		// Make a request to the slothpixel api (hypixel api but we dont need an api key)
-		const graphqlQuery = await axios
-				.get<GraphQLQuery>("https://api.slothpixel.me/api/graphql", {
-					...fetchSettings,
-					data: { query: query, variables: { uuid }, operationName: "HypixelStats" },
-				})
-				.then(res => res.data)
+		const graphqlQuery = (await fetch("https://api.slothpixel.me/api/graphql", {
+				...postSettings,
+				body: JSON.stringify({ query: query, variables: { uuid }, operationName: "HypixelStats" }),
+			})
+				.then(res => res.json())
 				.catch(e => {
-					if (e.code === "ECONNABORTED") {
+					if (e.code === "ECONNRESET") {
 						// This means the request timed out
 						console.error("Slothpixel is down, sending error.")
 						throw "apiError"
 					} else throw e
-				}),
+				})) as GraphQLQuery,
 			playerJson = graphqlQuery.data.players.player,
 			guildJson = graphqlQuery.data.guild
 
