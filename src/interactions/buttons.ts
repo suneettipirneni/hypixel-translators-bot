@@ -1,8 +1,8 @@
-import { ButtonInteraction, Snowflake } from "discord.js"
-
 import { ids } from "../config.json"
 import { client } from "../index"
-import { GetStringFunction } from "../lib/imports"
+
+import type { GetStringFunction } from "../lib/imports"
+import type { ButtonInteraction, Snowflake } from "discord.js"
 
 export default async function handleButtonInteractions(interaction: ButtonInteraction<"cached">, getString: GetStringFunction) {
 	// Staff LOA warning removal system
@@ -10,7 +10,7 @@ export default async function handleButtonInteractions(interaction: ButtonIntera
 		if (interaction.message.mentions.users.first()!.id !== interaction.user.id)
 			return await interaction.reply({ content: "You can only remove your own LOA warning!", ephemeral: true })
 
-		const endDateRaw = interaction.message.embeds[0].fields[1].value.split("/")
+		const endDateRaw = interaction.message.embeds[0].fields![1].value.split("/")
 		if (new Date(Number(endDateRaw[2]), Number(endDateRaw[1]) - 1, Number(endDateRaw[0])).getTime() > Date.now()) {
 			await interaction.reply({
 				content: "You can't end this LOA yet! If something changed, please contact the admins.",

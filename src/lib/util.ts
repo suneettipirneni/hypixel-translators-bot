@@ -5,16 +5,17 @@ import { setInterval } from "node:timers"
 
 import axios from "axios"
 import {
-	ChatInputCommandInteraction,
-	GuildMember,
-	MessageActionRow,
-	MessageButton,
-	MessageEmbed,
-	NewsChannel,
-	Role,
-	Snowflake,
-	TextChannel,
-	User,
+	type ChatInputCommandInteraction,
+	type GuildMember,
+	ActionRowBuilder,
+	ButtonBuilder,
+	EmbedBuilder,
+	type NewsChannel,
+	type Role,
+	type Snowflake,
+	type TextChannel,
+	type User,
+	ButtonStyle,
 } from "discord.js"
 import puppeteer from "puppeteer"
 import { v4 } from "uuid"
@@ -292,23 +293,23 @@ export function transformDiscordLocale(discordLocale: string): string {
 	else return "en"
 }
 
-export function updateButtonColors(row: MessageActionRow, page: number, pages: unknown[]) {
+export function updateButtonColors(row: ActionRowBuilder<ButtonBuilder>, page: number, pages: unknown[]) {
 	if (page === 0) {
 		row.components.forEach(button => {
-			if (button.customId === "first" || button.customId === "previous") (button as MessageButton).setStyle("SECONDARY").setDisabled(true)
-			else (button as MessageButton).setStyle("SUCCESS").setDisabled(false)
+			if (button.customId === "first" || button.customId === "previous") button.setStyle(ButtonStyle.Secondary).setDisabled(true)
+			else button.setStyle(ButtonStyle.Success).setDisabled(false)
 		})
 	} else if (page === pages.length - 1) {
 		row.components.forEach(button => {
-			if (button.customId === "last" || button.customId === "next") (button as MessageButton).setStyle("SECONDARY").setDisabled(true)
-			else (button as MessageButton).setStyle("SUCCESS").setDisabled(false)
+			if (button.customId === "last" || button.customId === "next") button.setStyle(ButtonStyle.Secondary).setDisabled(true)
+			else button.setStyle(ButtonStyle.Success).setDisabled(false)
 		})
-	} else row.components.forEach(button => (button as MessageButton).setStyle("SUCCESS").setDisabled(false))
+	} else row.components.forEach(button => button.setStyle(ButtonStyle.Success).setDisabled(false))
 
 	return row
 }
 
-export function updateModlogFields(embed: MessageEmbed, modlog: PunishmentLog, modlogs?: PunishmentLog[]) {
+export function updateModlogFields(embed: EmbedBuilder, modlog: PunishmentLog, modlogs?: PunishmentLog[]) {
 	embed.setAuthor({ name: "Log message", url: `https://discord.com/channels/${ids.guilds.main}/${ids.channels.punishments}/${modlog.logMsg}` })
 	const expireTimestamp =
 		modlog.type === "VERBAL"
